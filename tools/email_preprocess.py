@@ -1,16 +1,14 @@
-#!/usr/bin/python
 
 import pickle
 import cPickle
 import numpy
 
-from sklearn import cross_validation
+from sklearn import model_selection
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectPercentile, f_classif
 
 
-
-def preprocess(words_file = "../tools/word_data.pkl", authors_file="../tools/email_authors.pkl"):
+def preprocess(words_file="../tools/word_data.pkl", authors_file="../tools/email_authors.pkl"):
     """ 
         this function takes a pre-made list of email texts (by default word_data.pkl)
         and the corresponding authors (by default email_authors.pkl) and performs
@@ -19,7 +17,7 @@ def preprocess(words_file = "../tools/word_data.pkl", authors_file="../tools/ema
             -- vectorizes into tfidf matrix
             -- selects/keeps most helpful features
 
-        after this, the feaures and labels are put into numpy arrays, which play nice with sklearn functions
+        after this, the features and labels are put into numpy arrays, which play nice with sklearn functions
 
         4 objects are returned:
             -- training/testing features
@@ -39,7 +37,7 @@ def preprocess(words_file = "../tools/word_data.pkl", authors_file="../tools/ema
 
     ### test_size is the percentage of events assigned to the test set
     ### (remainder go into training)
-    features_train, features_test, labels_train, labels_test = cross_validation.train_test_split(word_data, authors, test_size=0.1, random_state=42)
+    features_train, features_test, labels_train, labels_test = model_selection.train_test_split(word_data, authors, test_size=0.1, random_state=42)
 
 
 
@@ -47,7 +45,7 @@ def preprocess(words_file = "../tools/word_data.pkl", authors_file="../tools/ema
     vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
                                  stop_words='english')
     features_train_transformed = vectorizer.fit_transform(features_train)
-    features_test_transformed  = vectorizer.transform(features_test)
+    features_test_transformed = vectorizer.transform(features_test)
 
 
 
@@ -56,10 +54,10 @@ def preprocess(words_file = "../tools/word_data.pkl", authors_file="../tools/ema
     selector = SelectPercentile(f_classif, percentile=10)
     selector.fit(features_train_transformed, labels_train)
     features_train_transformed = selector.transform(features_train_transformed).toarray()
-    features_test_transformed  = selector.transform(features_test_transformed).toarray()
+    features_test_transformed = selector.transform(features_test_transformed).toarray()
 
     ### info on the data
-    print "no. of Chris training emails:", sum(labels_train)
-    print "no. of Sara training emails:", len(labels_train)-sum(labels_train)
+    print("no. of Chris training emails:", sum(labels_train))
+    print("no. of Sara training emails:", len(labels_train)-sum(labels_train))
     
     return features_train_transformed, features_test_transformed, labels_train, labels_test
