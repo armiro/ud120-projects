@@ -1,12 +1,15 @@
-#!/usr/bin/python
+#!C:\Python27
 
 import numpy as np
 import matplotlib.pyplot as plt
 import pylab as pl
 
+
 def prettyPicture(clf, X_test, y_test):
-    x_min = 0.0; x_max = 1.0
-    y_min = 0.0; y_max = 1.0
+    x_min = 0.0
+    x_max = 1.0
+    y_min = 0.0
+    y_max = 1.0
     
     # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, m_max]x[y_min, y_max].
@@ -27,8 +30,8 @@ def prettyPicture(clf, X_test, y_test):
     grade_bkg = [X_test[ii][0] for ii in range(0, len(X_test)) if y_test[ii]==1]
     bumpy_bkg = [X_test[ii][1] for ii in range(0, len(X_test)) if y_test[ii]==1]
 
-    plt.scatter(grade_sig, bumpy_sig, color = "b", label="fast")
-    plt.scatter(grade_bkg, bumpy_bkg, color = "r", label="slow")
+    plt.scatter(grade_sig, bumpy_sig, color="b", label="fast")
+    plt.scatter(grade_bkg, bumpy_bkg, color="r", label="slow")
     plt.legend()
     plt.xlabel("bumpiness")
     plt.ylabel("grade")
