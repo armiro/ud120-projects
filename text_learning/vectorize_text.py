@@ -1,10 +1,11 @@
-#!/usr/bin/python
+#!/C:/Python27
 
 import os
 import pickle
-import re
+# import re
 import sys
 
+from sklearn.feature_extraction.text import TfidfVectorizer
 sys.path.append( "../tools/" )
 from parse_out_email_text import parseOutText
 
@@ -15,7 +16,7 @@ from parse_out_email_text import parseOutText
     The list of all the emails from Sara are in the from_sara list
     likewise for emails from Chris (from_chris)
 
-    The actual documents are in the Enron email dataset, which
+    The actual documents are in the Enron email data-set, which
     you downloaded/unpacked in Part 0 of the first mini-project. If you have
     not obtained the Enron email corpus, run startup.py in the tools folder.
 
@@ -40,36 +41,43 @@ temp_counter = 0
 for name, from_person in [("sara", from_sara), ("chris", from_chris)]:
     for path in from_person:
         ### only look at first 200 emails when developing
-        ### once everything is working, remove this line to run over full dataset
-        temp_counter += 1
-        if temp_counter < 200:
-            path = os.path.join('..', path[:-1])
-            print path
-            email = open(path, "r")
+        ### once everything is working, remove this line to run over full data-set
+        # temp_counter += 1
+        # if temp_counter < 200:
 
-            ### use parseOutText to extract the text from the opened email
+        path = os.path.join('..', path[:-1])
+        # print path
+        email = open(path, "r")
 
-            ### use str.replace() to remove any instances of the words
-            ### ["sara", "shackleton", "chris", "germani"]
+        ### use parseOutText to extract the text from the opened email
+        cleanedEmail = parseOutText(email)
+        ### use str.replace() to remove any instances of the words
+        ### ["sara", "shackleton", "chris", "germani"]
+        for word in ["sara", "shackleton", "chris", "germani"]:
+            cleanedEmail = cleanedEmail.replace(word, '')
 
-            ### append the text to word_data
+        ### append the text to word_data
+        word_data.append(cleanedEmail)
+        ### append a 0 to from_data if email is from Sara, and 1 if email is from Chris
+        if from_person == "sara":
+            from_data.append(0)
+        elif from_person == "chris":
+            from_data.append(1)
 
-            ### append a 0 to from_data if email is from Sara, and 1 if email is from Chris
+        email.close()
 
+print 'word_data[152] is:', word_data[152]
 
-            email.close()
-
-print "emails processed"
+vectorizer = TfidfVectorizer(stop_words='english')
+bagOfWords = vectorizer.fit_transform(word_data)
+uniqueWords = vectorizer.get_feature_names()
+print 'Total number of unique words is:', len(uniqueWords)
+print 'The word number 34597 in the TfIdf is:', uniqueWords[34597]
+print "... emails processed!"
 from_sara.close()
 from_chris.close()
 
 pickle.dump( word_data, open("your_word_data.pkl", "w") )
 pickle.dump( from_data, open("your_email_authors.pkl", "w") )
-
-
-
-
-
-### in Part 4, do TfIdf vectorization here
 
 
