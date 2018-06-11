@@ -53,15 +53,16 @@ for name, from_person in [("sara", from_sara), ("chris", from_chris)]:
         cleanedEmail = parseOutText(email)
         ### use str.replace() to remove any instances of the words
         ### ["sara", "shackleton", "chris", "germani"]
-        for word in ["sara", "shackleton", "chris", "germani"]:
+        ### After running find_signature.py, more words were appended to the list below!
+        for word in ["sara", "shackleton", "chris", "germani", "sshacklensf", "cgermannsf"]:
             cleanedEmail = cleanedEmail.replace(word, '')
 
         ### append the text to word_data
         word_data.append(cleanedEmail)
         ### append a 0 to from_data if email is from Sara, and 1 if email is from Chris
-        if from_person == "sara":
+        if name == "sara":
             from_data.append(0)
-        elif from_person == "chris":
+        elif name == "chris":
             from_data.append(1)
 
         email.close()
@@ -80,4 +81,5 @@ from_chris.close()
 pickle.dump( word_data, open("your_word_data.pkl", "w") )
 pickle.dump( from_data, open("your_email_authors.pkl", "w") )
 
-
+# print len(word_data)
+# print len(from_data)
