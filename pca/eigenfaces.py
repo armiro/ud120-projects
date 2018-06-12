@@ -23,12 +23,12 @@ import logging
 import pylab as pl
 import numpy as np
 
-from sklearn.cross_validation import train_test_split
+from sklearn.model_selection import train_test_split
 from sklearn.datasets import fetch_lfw_people
-from sklearn.grid_search import GridSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
-from sklearn.decomposition import RandomizedPCA
+from sklearn.decomposition import PCA
 from sklearn.svm import SVC
 
 # Display progress logs on stdout
@@ -53,7 +53,7 @@ y = lfw_people.target
 target_names = lfw_people.target_names
 n_classes = target_names.shape[0]
 
-print "Total dataset size:"
+print "Total data set size:"
 print "n_samples: %d" % n_samples
 print "n_features: %d" % n_features
 print "n_classes: %d" % n_classes
@@ -64,52 +64,57 @@ print "n_classes: %d" % n_classes
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42)
 
 ###############################################################################
-# Compute a PCA (eigenfaces) on the face dataset (treated as unlabeled
-# dataset): unsupervised feature extraction / dimensionality reduction
-n_components = 150
+# Compute a PCA (eigenfaces) on the face data set (treated as unlabeled
+# data set): unsupervised feature extraction / dimensionality reduction
+# Computing models based on different number of PCs and observing how F1-score changes.
+# plt.show() is commented! That's better to use it when using one specific n_components value.
+n_components = [10, 15, 25, 50, 100, 250]
 
-print "Extracting the top %d eigenfaces from %d faces" % (n_components, X_train.shape[0])
-t0 = time()
-pca = RandomizedPCA(n_components=n_components, whiten=True).fit(X_train)
-print "done in %0.3fs" % (time() - t0)
+for n_component in n_components:
 
-eigenfaces = pca.components_.reshape((n_components, h, w))
+    print "Extracting the top %d eigenfaces from %d faces" % (n_component, X_train.shape[0])
+    t0 = time()
+    pca = PCA(n_components=n_component, whiten=True, svd_solver='randomized').fit(X_train)
+    print "done in %0.3fs" % (time() - t0)
 
-print "Projecting the input data on the eigenfaces orthonormal basis"
-t0 = time()
-X_train_pca = pca.transform(X_train)
-X_test_pca = pca.transform(X_test)
-print "done in %0.3fs" % (time() - t0)
+    eigenfaces = pca.components_.reshape((n_component, h, w))
 
+    variances = pca.explained_variance_ratio_
+    print "The variance ratio of the first PC is:", round(variances[0], 3)
+    print "And for the second one is:", round(variances[1], 3)
 
-###############################################################################
-# Train a SVM classification model
+    print "Projecting the input data on the eigenfaces orthonormal basis"
+    t1 = time()
+    X_train_pca = pca.transform(X_train)
+    X_test_pca = pca.transform(X_test)
+    print "done in %0.3fs" % (time() - t1)
 
-print "Fitting the classifier to the training set"
-t0 = time()
-param_grid = {
-         'C': [1e3, 5e3, 1e4, 5e4, 1e5],
-          'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1],
-          }
-# for sklearn version 0.16 or prior, the class_weight parameter value is 'auto'
-clf = GridSearchCV(SVC(kernel='rbf', class_weight='balanced'), param_grid)
-clf = clf.fit(X_train_pca, y_train)
-print "done in %0.3fs" % (time() - t0)
-print "Best estimator found by grid search:"
-print clf.best_estimator_
+    ###############################################################################
+    # Train an SVM classification model
 
+    print "Fitting the classifier to the training set"
+    t2 = time()
+    param_grid = {
+        'C': [1e3, 5e3, 1e4, 5e4, 1e5],
+        'gamma': [0.0001, 0.0005, 0.001, 0.005, 0.01, 0.1],
+    }
+    # for sklearn version 0.16 or prior, the class_weight parameter value is 'auto'
+    clf = GridSearchCV(SVC(kernel='rbf', class_weight='balanced'), param_grid)
+    clf = clf.fit(X_train_pca, y_train)
+    print "done in %0.3fs" % (time() - t2)
+    print "Best estimator found by grid search:"
+    print clf.best_estimator_
 
-###############################################################################
-# Quantitative evaluation of the model quality on the test set
+    ###############################################################################
+    # Quantitative evaluation of the model quality on the test set
 
-print "Predicting the people names on the testing set"
-t0 = time()
-y_pred = clf.predict(X_test_pca)
-print "done in %0.3fs" % (time() - t0)
+    print "Predicting the people names on the testing set"
+    t3 = time()
+    y_pred = clf.predict(X_test_pca)
+    print "done in %0.3fs" % (time() - t3)
 
-print classification_report(y_test, y_pred, target_names=target_names)
-print confusion_matrix(y_test, y_pred, labels=range(n_classes))
-
+    print classification_report(y_test, y_pred, target_names=target_names)
+    print confusion_matrix(y_test, y_pred, labels=range(n_classes))
 
 ###############################################################################
 # Qualitative evaluation of the predictions using matplotlib
@@ -133,8 +138,7 @@ def title(y_pred, y_test, target_names, i):
     true_name = target_names[y_test[i]].rsplit(' ', 1)[-1]
     return 'predicted: %s\ntrue:      %s' % (pred_name, true_name)
 
-prediction_titles = [title(y_pred, y_test, target_names, i)
-                         for i in range(y_pred.shape[0])]
+prediction_titles = [title(y_pred, y_test, target_names, i) for i in range(y_pred.shape[0])]
 
 plot_gallery(X_test, prediction_titles, h, w)
 
@@ -143,4 +147,4 @@ plot_gallery(X_test, prediction_titles, h, w)
 eigenface_titles = ["eigenface %d" % i for i in range(eigenfaces.shape[0])]
 plot_gallery(eigenfaces, eigenface_titles, h, w)
 
-pl.show()
+# pl.show()
